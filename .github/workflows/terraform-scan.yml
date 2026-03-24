@@ -1,0 +1,31 @@
+name: Scan sécurité Terraform
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  tfsec:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Installer tfsec
+        run: |
+          # Télécharge tfsec depuis GitHub releases
+          curl -sSL https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64 \
+            -o /usr/local/bin/tfsec
+          chmod +x /usr/local/bin/tfsec
+
+      - name: Scanner le répertoire terraform/
+        run: |
+          # Scan complet — affiche toutes les violations sans bloquer
+          tfsec terraform/
+
+      - name: Vérifier le code de sortie pour CRITICAL
+        run: |
+          # Bloque le pipeline si des violations CRITICAL sont détectées
+          tfsec terraform/ --minimum-severity CRITICAL --exit-code 1
+          echo "✅ Aucune issue CRITICAL détectée — pipeline autorisé à continuer"
+
